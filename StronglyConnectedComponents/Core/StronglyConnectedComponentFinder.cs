@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace StronglyConnectedComponents
+namespace StronglyConnectedComponents.Core
 {
     /// <summary>
     /// Implementation of the Tarjan stronly connected components algorithm.
