@@ -13,7 +13,7 @@ namespace StronglyConnectedComponents.Core
     public class StronglyConnectedComponentFinder<T>
     {
         private StronglyConnectedComponentList<T> stronglyConnectedComponents;
-        private Stack<Vertex<T>> stack;
+        private StackSet<Vertex<T>> stack;
         private int index;
 
         /// <summary>
@@ -21,11 +21,11 @@ namespace StronglyConnectedComponents.Core
         /// </summary>
         /// <param name="graph">Graph to detect cycles within.</param>
         /// <returns>Set of strongly connected components (sets of vertices)</returns>
-        public StronglyConnectedComponentList<T> DetectCycle(IEnumerable<Vertex<T>> graph)
+        public StronglyConnectedComponentList<T> DetectCycle(IEnumerable<Vertex<T>> graph, IEqualityComparer<Vertex<T>> comparer = null)
         {
             stronglyConnectedComponents = new StronglyConnectedComponentList<T>();
             index = 0;
-            stack = new Stack<Vertex<T>>();
+            stack = new StackSet<Vertex<T>>(comparer);
             foreach (var v in graph)
             {
                 if (v.Index < 0)
