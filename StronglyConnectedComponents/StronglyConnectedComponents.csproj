@@ -43,6 +43,7 @@
     <Compile Include="Core\StackSet.cs" />
     <Compile Include="Core\StronglyConnectedComponent.cs" />
     <Compile Include="Core\StronglyConnectedComponentFinder.cs" />
+    <Compile Include="Core\VertexBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\StronglyConnectedComponentList.cs" />
     <Compile Include="Core\Vertex.cs" />
