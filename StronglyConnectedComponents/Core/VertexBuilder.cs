@@ -26,8 +26,11 @@ namespace StronglyConnectedComponents.Core
 
 			if (vertexBySource.TryAdd(source, vertex = new Vertex<T>(source)))
 			{
-				foreach (var d in dependencySelector(vertex.Value))
-					vertex.Dependencies.Add(BuildVertex(vertexBySource, d, dependencySelector));
+				var dependencies = dependencySelector(vertex.Value);
+
+				if (dependencies != null)
+					foreach (var d in dependencies)
+						vertex.Dependencies.Add(BuildVertex(vertexBySource, d, dependencySelector));
 				return vertex;
 			}
 
