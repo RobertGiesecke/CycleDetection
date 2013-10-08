@@ -2,6 +2,9 @@
 
 namespace StronglyConnectedComponents.Core
 {
+  /// <summary>
+  /// Handles equality of <see cref="Vertex{T}"/> instances using their <see cref="Vertex{T}.Value"/> property.
+  /// </summary>
   public sealed class VertexValueComparer<T> : IEqualityComparer<Vertex<T>>
   {
     private readonly IEqualityComparer<T> _Comparer;
