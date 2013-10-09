@@ -1,10 +1,13 @@
 ﻿This is a fork of [Daniel Bradley](https://github.com/danielrbradley)'s [C# implementation](https://github.com/danielrbradley/CycleDetection) of the [Tarjan cycle detection algorithm](http://en.wikipedia.org/wiki/Tarjan's_strongly_connected_components_algorithm).
 
+IOW: You can use this library to sort dependencies and even handle cyclic references. e.g. to compile stuff in the right order.
+
 I found it to be quite useful but I didn't like how one had to manually setup the dependency vertices. (It also supports custom comparers now.)
 
 So I moved the original code into the Core sub namespace and wrote a class that allows to setup dependencies using a simple lambda expression.
 
-This is example is taken from the test Cycle2. It shows a case in which A depends on B, B depends on C but C depends on A. Thus creating a cyclic dependency.
+This is example shows a case in which A depends on B, B depends on C but C depends on A. Thus creating a cyclic dependency.
+There's also D which depends on B. 
 
     // A→B
     // ↑ ↓
@@ -12,6 +15,7 @@ This is example is taken from the test Cycle2. It shows a case in which A depend
 
     var graph = new[]
     {
+      new{Value ="D", DependsOn = "B"},
       new{Value ="A", DependsOn = "B"},
       new{Value ="B", DependsOn = "C"},
       new{Value ="C", DependsOn = "A"},
@@ -20,10 +24,27 @@ This is example is taken from the test Cycle2. It shows a case in which A depend
     var byValue = graph.ToLookup(k => k.Value);
     var components = graph.DetectCycles(s => byValue[s.DependsOn]);
 
-    Assert.AreEqual(1, components.Count); // 1 cycle
-    Assert.AreEqual(0, components.IndependentComponents().Count()); // no component outside that 1 cycle
+    Assert.AreEqual(2, components.Count); // 1 cycle + D
+    Assert.AreEqual(1, components.IndependentComponents().Count()); // only D is outside the cycle
     Assert.AreEqual(1, components.Cycles().Count()); // 1 cycle
-    Assert.AreEqual(3, components.Single().Count); // the cycle has 3 components
+    Assert.AreEqual(3, components[0].Count); // the cycle has 3 components
+    Assert.AreEqual("D", components[1].Single().Value); // D is after the cycle, because it depends on it
+
+I also added a way to merge cyclic dependencies into a single entity. Which is probably not that interesting for most. 
+However, I use it to have a merged assembly from every cycle of interconnected Jars when I compile them using IKVMC. And have that merged assembly name as the reference for the other Jar-assemblies.
+
+    var mergedGraph = components.MergeCyclicDependencies((cycle, getMerged) => new
+                              {
+                                Value = cycle.Contents.OrderBy(t => t.Value)
+                                                      .Aggregate("", (r, c) => r + "-" + c.Value).TrimStart('-'),
+                                DependsOn = (from d in cycle.Dependencies
+                                             select (getMerged(d) ?? d.Single()).Value).SingleOrDefault()
+                              });
+Result
+
+>		{ Value = "A-B-C", DependsOn = null }
+>		{ Value = "D", DependsOn = "A-B-C" }
+
 
 Original Readme:
 
