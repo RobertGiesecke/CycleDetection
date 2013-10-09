@@ -34,16 +34,16 @@ I also added a way to merge cyclic dependencies into a single entity. Which is p
 However, I use it to have a merged assembly from every cycle of interconnected Jars when I compile them using IKVMC. And have that merged assembly name as the reference for the other Jar-assemblies.
 
     var mergedGraph = components.MergeCyclicDependencies((cycle, getMerged) => new
-                              {
-                                Value = cycle.Contents.OrderBy(t => t.Value)
-                                                      .Aggregate("", (r, c) => r + "-" + c.Value).TrimStart('-'),
-                                DependsOn = (from d in cycle.Dependencies
-                                             select (getMerged(d) ?? d.Single()).Value).SingleOrDefault()
-                              });
+                      {
+                        Value = cycle.Contents.OrderBy(t => t.Value)
+                                              .Aggregate("", (r, c) => r + "-" + c.Value).TrimStart('-'),
+                        DependsOn = (from d in cycle.Dependencies
+                                     select (getMerged(d) ?? d.Single()).Value).SingleOrDefault()
+                      });
 Result
 
->		{ Value = "A-B-C", DependsOn = null }
->		{ Value = "D", DependsOn = "A-B-C" }
+>		{ Value = "A-B-C", DependsOn = null } -> the name reflects  all included items
+>		{ Value = "D", DependsOn = "A-B-C" }  -> D now references the new name (thx to "getMerged")
 
 
 Original Readme:
