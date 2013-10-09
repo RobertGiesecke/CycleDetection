@@ -14,10 +14,10 @@ namespace StronglyConnectedComponents.Core
     /// <param name="dependencySelector">Required. A delegate that takes an items of <see cref="source"/> and returns a sequence of dependencies.
     /// <remarks>Can return null to indicate no dependency.</remarks></param>
     /// <param name="comparer">Required. An implementation of <see cref="IEqualityComparer{T}"/>, this is used to compare the values with their dependencies.</param>
-    public static IEnumerable<Vertex<T>> BuildVertices<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> dependencySelector, IEqualityComparer<T> comparer)
+    public static IEnumerable<Vertex<T>> BuildVertices<T>(IEnumerable<T> source, Func<T, IEnumerable<T>> dependencySelector, IEqualityComparer<T> comparer)
     {
       if (source == null) throw new ArgumentNullException("source");
-      if (dependencySelector == null) throw new ArgumentNullException("getDependencies");
+      if (dependencySelector == null) throw new ArgumentNullException("dependencySelector");
       if (comparer == null) throw new ArgumentNullException("comparer");
 
       var vertexBySource = new ConcurrentDictionary<T, Vertex<T>>(comparer);
