@@ -64,7 +64,7 @@ namespace StronglyConnectedComponents.Core
                 {
                     w = stack.Pop();
                     scc.Add(w);
-                } while (v != w);
+                } while (!stack.Comparer.Equals(v, w));
                 stronglyConnectedComponents.Add(scc);
             }
 
