@@ -35,11 +35,46 @@ namespace StronglyConnectedComponents
 
       var components = ResolveStronglyConnectedComponents(source, dependencySelector, valueComparer);
 
-      return (from c in components
-              let cycleSet = new HashSet<T>(c.Select(t => t.Value), valueComparer)
-              select new DependencyCycle<T>(cycleSet.Count > 1,
-                                            cycleSet,
-                                            new HashSet<T>(c.SelectMany(v => v.Dependencies.Select(dv => dv.Value)), valueComparer))).ToList();
+      return ExtractCycles(components, valueComparer);
+    }
+
+    public static IList<DependencyCycle<T>> ExtractCycles<T>(this IEnumerable<StronglyConnectedComponent<T>> components, IEqualityComparer<T> valueComparer)
+    {
+      var asList = components.ToList();
+
+      var getDependencyCycleFromSc = BuildGetDependencyCycleFromStronglyConnectedComponent(valueComparer, asList);
+
+      return asList.ConvertAll(t => getDependencyCycleFromSc(t));
+    }
+
+    private static Func<StronglyConnectedComponent<T>, DependencyCycle<T>> BuildGetDependencyCycleFromStronglyConnectedComponent<T>(IEqualityComparer<T> valueComparer, IEnumerable<StronglyConnectedComponent<T>> asList)
+    {
+      var vertexComparer = new VertexValueComparer<T>(valueComparer);
+      var byVertex = (from c in asList
+                      from v in c
+                      select new { c, v })
+        .GroupBy(k => k.v, v => v.c, vertexComparer)
+        .ToDictionary(k => k.Key, v => v.ToHashSet());
+
+      var cycleByComponent = new Dictionary<StronglyConnectedComponent<T>, DependencyCycle<T>>();
+
+      Func<StronglyConnectedComponent<T>, DependencyCycle<T>> getCycle = null;
+
+      getCycle = sc =>
+      {
+        DependencyCycle<T> result;
+        if (cycleByComponent.TryGetValue(sc, out result))
+          return result;
+
+        var dependencies = sc.SelectMany(t => t.Dependencies).SelectMany(d => byVertex[d]);
+        var sets = new HashSet<DependencyCycle<T>>();
+        DependencyCycle<T> cycle;
+        cycleByComponent.Add(sc, cycle = new DependencyCycle<T>(sc.Select(t => t.Value).ToHashSet(valueComparer), sets));
+        sets.UnionWith(dependencies.Select(getCycle).Where(t => t != cycle));
+        return cycle;
+      };
+
+      return getCycle;
     }
 
     /// <summary>
@@ -50,17 +85,17 @@ namespace StronglyConnectedComponents
     /// <param name="dependencySelector">Required. A delegate that takes an items of <see cref="source"/> and returns a sequence of dependencies.
     /// <remarks>Can return null to indicate no dependency.</remarks></param>
     /// <param name="comparer">Not required. A n implementation of <see cref="IEqualityComparer{T}"/>, this is used to compare the values with their dependencies.</param>
-    public static StronglyConnectedComponentList<T> ResolveStronglyConnectedComponents<T>(IEnumerable<T> source, Func<T, IEnumerable<T>> dependencySelector, IEqualityComparer<T> comparer = null)
+    public static StronglyConnectedComponentList<T> ResolveStronglyConnectedComponents<T>(
+      IEnumerable<T> source, Func<T, IEnumerable<T>> dependencySelector, IEqualityComparer<T> comparer = null)
     {
       var valueComparer = comparer ?? EqualityComparer<T>.Default;
       var vertexComparer = new VertexValueComparer<T>(valueComparer);
 
       var finder = new StronglyConnectedComponentFinder<T>();
 
-      var vertices = source.BuildVertices(dependencySelector, valueComparer);
+      var vertices = VertexBuilder.BuildVertices(source, dependencySelector, valueComparer);
 
-      var result = finder.DetectCycle(vertices, vertexComparer);
-      return result;
+      return finder.DetectCycle(vertices, vertexComparer);
     }
 
     /// <summary>
@@ -70,7 +105,8 @@ namespace StronglyConnectedComponents
     /// <returns></returns>
     public static IEnumerable<DependencyCycle<T>> IndependentComponents<T>(this IEnumerable<DependencyCycle<T>> components)
     {
-      if (components == null) throw new ArgumentNullException("components");
+      if (components == null)
+        throw new ArgumentNullException("components");
       return components.Where(c => !c.IsCyclic);
     }
 
@@ -82,7 +118,8 @@ namespace StronglyConnectedComponents
     /// <returns></returns>
     public static IEnumerable<DependencyCycle<T>> Cycles<T>(this IEnumerable<DependencyCycle<T>> components)
     {
-      if (components == null) throw new ArgumentNullException("components");
+      if (components == null)
+        throw new ArgumentNullException("components");
       return components.Where(c => c.IsCyclic);
     }
   }

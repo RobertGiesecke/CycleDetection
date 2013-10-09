@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using StronglyConnectedComponents.Core;
 
 namespace StronglyConnectedComponents
 {
@@ -7,7 +9,7 @@ namespace StronglyConnectedComponents
   {
     public bool IsCyclic { get; private set; }
     public ISet<T> Contents { get; private set; }
-    public ISet<T> Dependencies { get; private set; }
+    public ISet<DependencyCycle<T>> Dependencies { get; private set; }
 
     public int Count
     {
@@ -24,9 +26,9 @@ namespace StronglyConnectedComponents
       return Contents.GetEnumerator();
     }
 
-    public DependencyCycle(bool isCyclic, ISet<T> contents, ISet<T> dependencies)
+    public DependencyCycle(ISet<T> contents, ISet<DependencyCycle<T>> dependencies)
     {
-      IsCyclic = isCyclic;
+      IsCyclic = contents.Count > 1;
       Contents = contents;
       Dependencies = dependencies;
     }

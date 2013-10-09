@@ -20,28 +20,75 @@ namespace StronglyConnectedComponents.Core
       if (dependencySelector == null) throw new ArgumentNullException("dependencySelector");
       if (comparer == null) throw new ArgumentNullException("comparer");
 
-      var vertexBySource = new ConcurrentDictionary<T, Vertex<T>>(comparer);
+      var builder = new VertexBuilder<T>(dependencySelector, comparer);
+      return builder.BuildVertices(source);
+    }
+  }
 
-      return source.Select(t => BuildVertex(vertexBySource, t, dependencySelector));
+  public sealed class VertexBuilder<T>
+  {
+    private readonly Func<T, IEnumerable<T>> _DependencySelector;
+
+    private readonly IDictionary<T, Vertex<T>> _VertexBySource;
+    // ensure to be run once per actual value
+    private readonly IDictionary<T, Vertex<T>> _VertexByActualSource = new Dictionary<T, Vertex<T>>();
+    private readonly IEqualityComparer<Vertex<T>> _VertexValueComparer;
+
+    public VertexBuilder(Func<T, IEnumerable<T>> dependencySelector, IEqualityComparer<T> comparer)
+    {
+      if (dependencySelector == null) throw new ArgumentNullException("dependencySelector");
+
+      _DependencySelector = dependencySelector;
+      _VertexBySource = new Dictionary<T, Vertex<T>>(comparer);
+      _VertexValueComparer = new VertexValueComparer<T>(comparer);
     }
 
-    private static Vertex<T> BuildVertex<T>(ConcurrentDictionary<T, Vertex<T>> vertexBySource, T source, Func<T, IEnumerable<T>> dependencySelector)
+    public IEnumerable<Vertex<T>> BuildVertices(IEnumerable<T> source)
+    {
+      foreach (var vertex in source.Select(BuildVertex))
+      {
+        if (vertex.Dependencies.Count > 1)
+        {
+          // unique values according to the comparer
+          var set = new HashSet<Vertex<T>>(vertex.Dependencies, _VertexValueComparer);
+
+          if (set.Count != vertex.Dependencies.Count)
+          {
+            vertex.Dependencies = set;
+          }
+        }
+        yield return vertex;
+      }
+    }
+
+    private Vertex<T> BuildVertex(T source)
     {
       Vertex<T> vertex;
-      if (vertexBySource.TryGetValue(source, out vertex))
+      if (_VertexByActualSource.TryGetValue(source, out vertex))
         return vertex;
 
-      if (vertexBySource.TryAdd(source, vertex = new Vertex<T>(source)))
+      if (!_VertexBySource.TryGetValue(source, out vertex))
       {
-        var dependencies = dependencySelector(vertex.Value);
-
-        if (dependencies != null)
-          foreach (var d in dependencies)
-            vertex.Dependencies.Add(BuildVertex(vertexBySource, d, dependencySelector));
+        _VertexBySource.Add(source, vertex = new Vertex<T>(source));
+        _VertexByActualSource[source] = vertex;
+        AddDependencies(vertex, _DependencySelector(source));
         return vertex;
       }
 
-      return vertexBySource[source];
+      if (!_VertexByActualSource.ContainsKey(source))
+      {
+        AddDependencies(vertex, _DependencySelector(source));
+        return vertex;
+      }
+      return vertex;
+    }
+
+    private void AddDependencies(Vertex<T> vertex, IEnumerable<T> dependencies)
+    {
+      if (dependencies == null) return;
+
+      foreach (var d in dependencies)
+        vertex.Dependencies.Add(BuildVertex(d));
     }
   }
 }
