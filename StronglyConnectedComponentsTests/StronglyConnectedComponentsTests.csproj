@@ -45,9 +45,13 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DependencyCycleMergerTests.cs" />
     <Compile Include="DependencyResolverTests.cs" />
+    <Compile Include="TestBase.cs" />
+    <Compile Include="Utils\DerivedComparer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StronglyConnectedComponentTests.cs" />
+    <Compile Include="Utils\TestValue.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\StronglyConnectedComponents\StronglyConnectedComponents.csproj">
