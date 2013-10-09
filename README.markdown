@@ -6,7 +6,7 @@ I found it to be quite useful but I didn't like how one had to manually setup th
 
 So I moved the original code into the Core sub namespace and wrote a class that allows to setup dependencies using a simple lambda expression.
 
-This is example shows a case in which A depends on B, B depends on C but C depends on A. Thus creating a cyclic dependency.
+This example shows a case in which A depends on B, B depends on C but C depends on A. Thus creating a cyclic dependency.
 There's also D which depends on B. 
 
     // A→B
