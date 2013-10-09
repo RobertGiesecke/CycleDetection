@@ -8,21 +8,6 @@ namespace StronglyConnectedComponents
   public static class DependencyResolver
   {
     /// <summary>
-    /// Allows to merge cyclic dependencies into a single instance of the source element type.
-    /// </summary>
-    /// <param name="components">Required. A lsequenceist of dependency components as returned by <see cref="DetectCycles{T}"/>.</param>
-    /// <param name="mergeCycle" >Not required. A delegate that take the cyclic component to merge and returns the merged instance of <see cref="T"/>.
-    /// Will throw a <see cref="InvalidOperationException"/> when a cycle is found but <see cref="mergeCycle"/> is null.</param>
-    public static IEnumerable<T> FlattenCyclicDependencies<T>(this IEnumerable<DependencyCycle<T>> components, Func<DependencyCycle<T>, T> mergeCycle = null)
-    {
-      if (mergeCycle == null)
-        mergeCycle = set => { throw new InvalidOperationException(string.Format("A cyclic dependency has been detected. This method cannot continue without a value for mergeCycle.")); };
-
-      return from c in components
-             select c.IsCyclic ? mergeCycle(c) : c.Contents.Single();
-    }
-
-    /// <summary>
     /// Sorts all items from <see cref="source"/> so that dependencies come first. It will group cyclic dependencies into a single component.
     /// </summary>
     /// <param name="source">Required. The sequence of elements that need to be sorted.</param>
