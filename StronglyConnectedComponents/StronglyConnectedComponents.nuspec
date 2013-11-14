@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>StronglyConnectedComponents</id>
+    <version>1.0.1</version>
+    <title>Library to resolve cyclic or acyclic dependencies</title>
+    <authors>Robert Giesecke</authors>
+    <owners>Robert Giesecke</owners>
+    <projectUrl>https://github.com/RobertGiesecke/CycleDetection</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <summary>
+		This is a fork of Daniel Bradley's C# implementation of the Tarjan cycle detection algorithm.
+
+		IOW: You can use this library to sort dependencies and even handle cyclic references. e.g. to compile stuff in the right order.
+    </summary>
+    <licenseUrl>http://opensource.org/licenses/mit-license.php</licenseUrl>
+    <description>
+		This is a fork of Daniel Bradley's C# implementation of the Tarjan cycle detection algorithm.
+
+		IOW: You can use this library to sort dependencies and even handle cyclic references. e.g. to compile stuff in the right order.
+
+		I found it to be quite useful but I didn't like how one had to manually setup the dependency vertices. (It also supports custom comparers now.)
+
+		So I moved the original code into the Core sub namespace and wrote a class that allows to setup dependencies using a simple lambda expression.
+    </description>
+    <language>en-US</language>
+    <tags>dependencies cyclic acyclic tarjan cycledetection dependency resolution</tags>
+  </metadata>
+</package>
