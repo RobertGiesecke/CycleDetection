@@ -56,7 +56,9 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <Import Project="Create Nuget Package.targets" Condition="Exists('Create Nuget Package.targets')"/>
   <ItemGroup>
+    <None Include="Create Nuget Package.targets" />
     <None Include="StronglyConnectedComponents.nuspec" />
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
