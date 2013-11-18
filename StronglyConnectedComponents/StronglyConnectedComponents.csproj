@@ -73,7 +73,7 @@
     <None Include="CycleDetection.snk" />
     <None Include="packages.config" />
   </ItemGroup>
-  <Import Project="../packages/CreateSnkFile.1.0.1/tools/CreateSnkFile.targets" Condition="Exists('../packages/CreateSnkFile.1.0.1/tools/CreateSnkFile.targets')" />
+  <Import Project="../packages/CreateSnkFile.1.0.1.1/tools/CreateSnkFile.targets" Condition="Exists('../packages/CreateSnkFile.1.0.1.1/tools/CreateSnkFile.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
