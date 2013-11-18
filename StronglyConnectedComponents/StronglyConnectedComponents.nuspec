@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>CycleDetection</id>
-    <version>1.0.0</version>
+    <version>1.0.1.1</version>
     <title>Library to resolve cyclic or acyclic dependencies</title>
     <authors>Robert Giesecke</authors>
     <owners>Robert Giesecke</owners>
@@ -25,5 +25,6 @@
     </description>
     <language>en-US</language>
     <tags>dependencies cyclic acyclic tarjan cycledetection dependency resolution</tags>
+    <releaseNotes>The dependency on CreateSnkFile has developmentDependeny set to true now.</releaseNotes>
   </metadata>
 </package>
