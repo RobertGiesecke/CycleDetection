@@ -1,20 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using StronglyConnectedComponents.Core;
 
 namespace StronglyConnectedComponents
 {
   public sealed class DependencyCycle<T> : IEnumerable<T>
   {
-    public bool IsCyclic { get; private set; }
-    public ISet<T> Contents { get; private set; }
-    public ISet<DependencyCycle<T>> Dependencies { get; private set; }
+    public bool IsCyclic { get; }
+    public ISet<T> Contents { get; }
+    public ISet<DependencyCycle<T>> Dependencies { get; }
 
-    public int Count
-    {
-      get { return Contents.Count; }
-    }
+    public int Count => Contents.Count;
 
     IEnumerator IEnumerable.GetEnumerator()
     {

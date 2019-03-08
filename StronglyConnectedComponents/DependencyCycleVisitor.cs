@@ -14,7 +14,7 @@ namespace StronglyConnectedComponents
       public static readonly HashSetEqualityComparer<T> Default = new HashSetEqualityComparer<T>();
       public bool Equals(HashSet<T> x, HashSet<T> y)
       {
-        if (x.Comparer != y.Comparer)
+        if (!ReferenceEquals(x.Comparer, y.Comparer))
         {
           throw new ArgumentOutOfRangeException(nameof(y),
             $"{nameof(Equals)} requires both hashsets to have the same comparer.");
@@ -50,13 +50,12 @@ namespace StronglyConnectedComponents
     private static IEnumerable<DependencyCycle<T>> VisitCyclesCore<T>(IEnumerable<DependencyCycle<T>> cycles,
       Action cancelled,
       IDictionary<DependencyCycle<T>, DependencyCycle<T>> cache,
-      DependencyVisitor.VisitCycleHandler<T> visit,
+      VisitCycleHandler<T> visit,
       IEqualityComparer<HashSet<DependencyCycle<T>>> setComparer)
     {
       foreach (var cycle in cycles)
       {
-        DependencyCycle<T> newCycle;
-        if (cache.TryGetValue(cycle, out newCycle))
+        if (cache.TryGetValue(cycle, out var newCycle))
         {
           yield return cycle;
           continue;

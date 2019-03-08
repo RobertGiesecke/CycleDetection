@@ -23,13 +23,77 @@ namespace StronglyConnectedComponents
       return ExtractCycles(components, valueComparer);
     }
 
+    /// <summary>
+    /// Sorts all items from <see cref="source"/> so that dependencies come first. It will group cyclic dependencies into a single component.
+    /// </summary>
+    /// <param name="source">Required. The sequence of elements that need to be sorted.</param>
+    /// <param name="keySelector">Required. a delegate that returns a key for each item.</param>
+    /// <param name="singleDependencySelector">Required. A delegate that takes an item of <see cref="source"/> and returns a key.
+    /// <remarks>Can return null to indicate no dependency.</remarks></param>
+    /// <param name="keyComparer">Not required. Used to compare keys.</param>
+    /// <param name="comparer">Not required. An implementation of <see cref="IEqualityComparer{T}"/>, this is used to compare the values.</param>
+    public static IList<DependencyCycle<T>> DetectCyclesUsingKey<T, TKey>(this IEnumerable<T> source,
+      Func<T, TKey> keySelector,
+      Func<T, TKey> singleDependencySelector,
+      IEqualityComparer<TKey> keyComparer = null,
+      IEqualityComparer<T> comparer = null)
+    {
+      return DetectCyclesUsingKey(
+        source,
+        keySelector,
+        dependencySelector: s =>
+        {
+          var key = singleDependencySelector(s);
+          return key == null
+            ? null
+            : new[] { key };
+        },
+        keyComparer: keyComparer,
+        comparer: comparer);
+    }
+
+    /// <summary>
+    /// Sorts all items from <see cref="source"/> so that dependencies come first. It will group cyclic dependencies into a single component.
+    /// </summary>
+    /// <param name="source">Required. The sequence of elements that need to be sorted.</param>
+    /// <param name="keySelector">Required. a delegate that returns a key for each item.</param>
+    /// <param name="dependencySelector">Required. A delegate that takes an item of <see cref="source"/> and returns a sequence of dependency keys.
+    /// <remarks>Can return null to indicate no dependency.</remarks></param>
+    /// <param name="keyComparer">Not required. Used to compare keys.</param>
+    /// <param name="comparer">Not required. An implementation of <see cref="IEqualityComparer{T}"/>, this is used to compare the values.</param>
+    public static IList<DependencyCycle<T>> DetectCyclesUsingKey<T, TKey>(this IEnumerable<T> source,
+      Func<T, TKey> keySelector,
+      Func<T, IEnumerable<TKey>> dependencySelector,
+      IEqualityComparer<TKey> keyComparer = null,
+      IEqualityComparer<T> comparer = null)
+    {
+      var sourceAsList = source.AsListInternal();
+#if NET40
+      var lookup = keyComparer != null
+        ? sourceAsList.ToDictionary(keySelector, keyComparer)
+        : sourceAsList.ToDictionary(keySelector);
+#else
+      var lookup = System.Collections.Immutable.ImmutableDictionary.ToImmutableDictionary(
+        sourceAsList,
+        keySelector,
+        v => v,
+        keyComparer ?? EqualityComparer<TKey>.Default,
+        comparer ?? EqualityComparer<T>.Default);
+#endif
+
+      return DetectCycles(
+        sourceAsList,
+        item => dependencySelector(item).Select(key => lookup[key]),
+        comparer);
+    }
+
     public static IList<DependencyCycle<T>> ExtractCycles<T>(this IEnumerable<StronglyConnectedComponent<T>> components, IEqualityComparer<T> valueComparer)
     {
-      var asList = components.ToList();
+      var asList = components.AsListInternal();
 
       var getDependencyCycleFromSc = BuildGetDependencyCycleFromStronglyConnectedComponent(valueComparer, asList);
 
-      return asList.ConvertAll(t => getDependencyCycleFromSc(t));
+      return asList.ConvertAllInternal(t => getDependencyCycleFromSc(t));
     }
 
     private static Func<StronglyConnectedComponent<T>, DependencyCycle<T>> BuildGetDependencyCycleFromStronglyConnectedComponent<T>(IEqualityComparer<T> valueComparer, IEnumerable<StronglyConnectedComponent<T>> asList)
@@ -43,23 +107,19 @@ namespace StronglyConnectedComponents
 
       var cycleByComponent = new Dictionary<StronglyConnectedComponent<T>, DependencyCycle<T>>();
 
-      Func<StronglyConnectedComponent<T>, DependencyCycle<T>> getCycle = null;
-
-      getCycle = sc =>
+      DependencyCycle<T> GetCycle(StronglyConnectedComponent<T> sc)
       {
-        DependencyCycle<T> result;
-        if (cycleByComponent.TryGetValue(sc, out result))
-          return result;
+        if (cycleByComponent.TryGetValue(sc, out var result)) return result;
 
         var dependencies = sc.SelectMany(t => t.Dependencies).SelectMany(d => byVertex[d]);
         var sets = new HashSet<DependencyCycle<T>>();
         DependencyCycle<T> cycle;
         cycleByComponent.Add(sc, cycle = new DependencyCycle<T>(sc.Select(t => t.Value).ToHashSet(valueComparer), sets));
-        sets.UnionWith(dependencies.Select(getCycle).Where(t => t != cycle));
+        sets.UnionWith(dependencies.Select(GetCycle).Where(t => t != cycle));
         return cycle;
-      };
+      }
 
-      return getCycle;
+      return GetCycle;
     }
 
     /// <summary>
@@ -91,12 +151,12 @@ namespace StronglyConnectedComponents
     public static IEnumerable<DependencyCycle<T>> IndependentComponents<T>(this IEnumerable<DependencyCycle<T>> components)
     {
       if (components == null)
-        throw new ArgumentNullException("components");
+        throw new ArgumentNullException(nameof(components));
       return components.Where(c => !c.IsCyclic);
     }
 
     /// <summary>
-    /// Returns only components that represent a cyclic dependancy.
+    /// Returns only components that represent a cyclic dependency.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="components">Required. A sequence of dependency components as returned by <see cref="DetectCycles{T}"/>.</param>
@@ -104,7 +164,7 @@ namespace StronglyConnectedComponents
     public static IEnumerable<DependencyCycle<T>> Cycles<T>(this IEnumerable<DependencyCycle<T>> components)
     {
       if (components == null)
-        throw new ArgumentNullException("components");
+        throw new ArgumentNullException(nameof(components));
       return components.Where(c => c.IsCyclic);
     }
   }

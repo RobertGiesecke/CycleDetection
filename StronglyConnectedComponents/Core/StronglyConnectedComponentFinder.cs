@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace StronglyConnectedComponents.Core
 {
     /// <summary>
-    /// Implementation of the Tarjan stronly connected components algorithm.
+    /// Implementation of the Tarjan strongly connected components algorithm.
     /// </summary>
     /// <seealso cref="http://en.wikipedia.org/wiki/Tarjan's_strongly_connected_components_algorithm"/>
     /// <seealso cref="http://stackoverflow.com/questions/261573/best-algorithm-for-detecting-cycles-in-a-directed-graph"/>
