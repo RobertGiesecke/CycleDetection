@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace StronglyConnectedComponents.Core
 {
@@ -11,7 +9,7 @@ namespace StronglyConnectedComponents.Core
 
         public StronglyConnectedComponentList()
         {
-            this.collection = new LinkedList<StronglyConnectedComponent<T>>();
+            collection = new LinkedList<StronglyConnectedComponent<T>>();
         }
 
         public StronglyConnectedComponentList(IEnumerable<StronglyConnectedComponent<T>> collection)
@@ -21,25 +19,19 @@ namespace StronglyConnectedComponents.Core
 
         public void Add(StronglyConnectedComponent<T> scc)
         {
-            this.collection.AddLast(scc);
+            collection.AddLast(scc);
         }
 
-        public int Count
-        {
-            get
-            {
-                return this.collection.Count;
-            }
-        }
+        public int Count => collection.Count;
 
         public IEnumerator<StronglyConnectedComponent<T>> GetEnumerator()
         {
-            return this.collection.GetEnumerator();
+            return collection.GetEnumerator();
         }
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
-            return this.collection.GetEnumerator();
+            return collection.GetEnumerator();
         }
 
         public IEnumerable<StronglyConnectedComponent<T>> IndependentComponents()

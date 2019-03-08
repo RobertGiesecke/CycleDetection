@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace StronglyConnectedComponents.Core
 {
   /// <summary>
-  /// A wrapper around a Stack<T> which uses a <see cref="IEqualityComparer{T}"/> and a <see cref="HashSet{T}"/> to make value identity configurable.
+  /// A wrapper around a <see cref="Stack{T}"/> which uses a <see cref="IEqualityComparer{T}"/> and a <see cref="HashSet{T}"/> to make value identity configurable.
   /// </summary>
   internal class StackSet<T> : ICollection<T>
   {
@@ -18,10 +18,7 @@ namespace StronglyConnectedComponents.Core
       _Set = comparer != null ? new HashSet<T>(comparer) : new HashSet<T>();
     }
 
-    public IEqualityComparer<T> Comparer
-    {
-      get { return _Set.Comparer; }
-    }
+    public IEqualityComparer<T> Comparer => _Set.Comparer;
 
     void ICollection<T>.Add(T item)
     {
@@ -49,12 +46,9 @@ namespace StronglyConnectedComponents.Core
       throw new NotImplementedException();
     }
 
-    public int Count
-    {
-      get { return _Stack.Count; }
-    }
+    public int Count => _Stack.Count;
 
-    bool ICollection<T>.IsReadOnly { get { return false; } }
+    bool ICollection<T>.IsReadOnly => false;
 
     IEnumerator IEnumerable.GetEnumerator()
     {
@@ -81,7 +75,7 @@ namespace StronglyConnectedComponents.Core
     public void Push(T item)
     {
       if (!_Set.Add(item))
-        throw new ArgumentException("An identical item has already been pushed.", "item");
+        throw new ArgumentException("An identical item has already been pushed.", nameof(item));
       _Stack.Push(item);
     }
 

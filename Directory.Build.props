@@ -1,6 +1,9 @@
 <Project>
     <PropertyGroup>
         <AssemblyOriginatorKeyFileValue>$([MSBuild]::GetPathOfFileAbove('CycleDetection.snk', '$(MSBuildThisFileDirectory)StronglyConnectedComponents'))</AssemblyOriginatorKeyFileValue>
+        <VersionPrefix>2.0.0</VersionPrefix>
+        <VersionSuffix Condition="'$(VersionSuffix)' == '' and '$(Configuration)' != 'Release'">$(Configuration)</VersionSuffix>
+        <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
     </PropertyGroup>
     <PropertyGroup>
         <TargetFrameworks>netstandard1.0;netstandard1.1;netcoreapp2.0;net40;net45</TargetFrameworks>

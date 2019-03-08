@@ -24,8 +24,9 @@ var graph = new[]
   new{Value ="C", DependsOn = "A"},
 };
 
-var byValue = graph.ToLookup(k => k.Value);
-var components = graph.DetectCycles(s => byValue[s.DependsOn]);
+var components = graph.DetectCyclesUsingKey(
+    s => s.Value,
+    s => s.DependsOn);
 
 Assert.AreEqual(2, components.Count); // 1 cycle + D
 Assert.AreEqual(1, components.IndependentComponents().Count()); // only D is outside the cycle

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -46,7 +45,7 @@ namespace StronglyConnectedComponents.Tests
 
       var byValue = graph.ToLookup(t => t.Value);
 
-      var components = graph.DetectCycles(s => s.DependsOn.SelectMany(d => byValue[d]));
+      var components = graph.DetectCyclesUsingKey(t => t.Value, s => s.DependsOn);
       Assert.AreEqual(2, components.Count);
       Assert.AreEqual(2, components.IndependentComponents().Count());
       Assert.AreEqual(0, components.Cycles().Count());
@@ -62,9 +61,8 @@ namespace StronglyConnectedComponents.Tests
                     TestValue.Create(2, 3),
                     TestValue.Create(3)
                   };
-      var byValue = graph.ToLookup(t => t.Value);
 
-      var components = graph.DetectCycles(s => s.DependsOn.SelectMany(d => byValue[d]));
+      var components = graph.DetectCyclesUsingKey(t => t.Value, s => s.DependsOn);
 
       Assert.AreEqual(3, components.Count);
       Assert.AreEqual(3, components.IndependentComponents().Count());
@@ -80,8 +78,7 @@ namespace StronglyConnectedComponents.Tests
                     TestValue.Create(1, 2),
                     TestValue.Create(2, 1),
                   };
-      var byValue = graph.ToLookup(t => t.Value);
-      var components = graph.DetectCycles(s => s.DependsOn.SelectMany(d => byValue[d]));
+      var components = graph.DetectCyclesUsingKey(t => t.Value, s => s.DependsOn);
 
       Assert.AreEqual(1, components.Count);
       Assert.AreEqual(0, components.IndependentComponents().Count());
@@ -115,8 +112,7 @@ namespace StronglyConnectedComponents.Tests
                     },
                   };
 
-      var byValue = graph.ToLookup(k => k.Value);
-      var components = graph.DetectCycles(s => byValue[s.DependsOn]);
+      var components = graph.DetectCyclesUsingKey(s => s.Value, s => s.DependsOn);
 
       Assert.AreEqual(1, components.Count);
       Assert.AreEqual(0, components.IndependentComponents().Count());
@@ -139,8 +135,7 @@ namespace StronglyConnectedComponents.Tests
                     TestValue.Create(5, 6),
                     TestValue.Create(6, 4),
                   };
-      var byValue = graph.ToLookup(t => t.Value);
-      var components = graph.DetectCycles(s => s.DependsOn.SelectMany(d => byValue[d]));
+      var components = graph.DetectCyclesUsingKey(t => t.Value, s => s.DependsOn);
 
       Assert.AreEqual(2, components.Count);
       Assert.AreEqual(0, components.IndependentComponents().Count());
@@ -162,8 +157,7 @@ namespace StronglyConnectedComponents.Tests
                     TestValue.Create("C", "A", "D"),
                     vD = TestValue.Create("D"),
                   };
-      var byValue = graph.ToLookup(t => t.Value);
-      var components = graph.DetectCycles(s => s.DependsOn.SelectMany(d => byValue[d]));
+      var components = graph.DetectCyclesUsingKey(t => t.Value, s => s.DependsOn);
 
       Assert.AreEqual(2, components.Count);
       Assert.AreEqual(1, components.IndependentComponents().Count());
@@ -205,28 +199,41 @@ namespace StronglyConnectedComponents.Tests
 
       var ignoreCase = DerivedComparer.Create(StringComparer.OrdinalIgnoreCase, (string t) => t.Trim());
 
+      var components1 = graph.DetectCyclesUsingKey(t => t.Value, s => s.DependsOn,
+        keyComparer: ignoreCase,
+        comparer: TestValue.CreateComparer(ignoreCase));
+      RunAssertions(components1);
+
       var byValue = graph.ToLookup(t => t.Value, ignoreCase);
-      var components = graph.DetectCycles(s => s.DependsOn.SelectMany(d => byValue[d]), TestValue.CreateComparer(ignoreCase));
+      var components2 = graph.DetectCycles(s => s.DependsOn.SelectMany(d => byValue[d]), TestValue.CreateComparer(ignoreCase));
+      RunAssertions(components2);
 
-      Assert.AreEqual(3, components.Count);
-      Assert.AreEqual(2, components.IndependentComponents().Count()); // D & E are acyclic
-      Assert.AreEqual(1, components.Cycles().Count());
-      Assert.AreEqual(1, components.Count(c => c.Count == 3));
-      Assert.AreEqual(2, components.Count(c => c.Count == 1));
 
-      var component1 = components.First();
 
-      Assert.IsTrue(component1.Single() == testValues.D); // first component has to be D (used by C which is in a cycle)
+      void RunAssertions(ICollection<DependencyCycle<TestValue<string>>> components)
+      {
+        Assert.AreEqual(3, components.Count);
+        Assert.AreEqual(2, components.IndependentComponents().Count()); // D & E are acyclic
+        Assert.AreEqual(1, components.Cycles().Count());
+        Assert.AreEqual(1, components.Count(c => c.Count == 3));
+        Assert.AreEqual(2, components.Count(c => c.Count == 1));
 
-      var component2 = components.Skip(1).First().ToList();
+        var component1 = components.First();
 
-      var component3 = components.Skip(2).First();
+        Assert.IsTrue(component1.Single() ==
+                      testValues.D); // first component has to be D (used by C which is in a cycle)
 
-      Assert.IsTrue(component3.Single() == testValues.E); // 3rd component has to be E (requires B which is in a cycle)
+        var component2 = components.Skip(1).First().ToList();
 
-      Assert.IsTrue(component2[0] == testValues.C); // first one has to be C (used by A & B)
-      Assert.IsTrue(component2[1] == testValues.B); // first one has to be B (used by A)
-      Assert.IsTrue(component2[2] == testValues.A); // first one has to be A (used by C, but was in the list )
+        var component3 = components.Skip(2).First();
+
+        Assert.IsTrue(component3.Single() ==
+                      testValues.E); // 3rd component has to be E (requires B which is in a cycle)
+
+        Assert.IsTrue(component2[0] == testValues.C); // first one has to be C (used by A & B)
+        Assert.IsTrue(component2[1] == testValues.B); // first one has to be B (used by A)
+        Assert.IsTrue(component2[2] == testValues.A); // first one has to be A (used by C, but was in the list )
+      }
     }
 
     // This test verifies that the correct equality comparer is used to identify values

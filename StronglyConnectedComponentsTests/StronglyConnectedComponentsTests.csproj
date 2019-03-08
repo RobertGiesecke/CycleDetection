@@ -8,6 +8,7 @@
         <AssemblyName>$(ProjAssemblyName)Tests</AssemblyName>
         <RootNamespace>$(ProjRootNamespace).Tests</RootNamespace>
         <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <TargetFrameworks>netcoreapp1.0;netcoreapp1.1;netcoreapp2.0;netcoreapp2.1;netcoreapp2.2;net40;net45</TargetFrameworks>
     </PropertyGroup>

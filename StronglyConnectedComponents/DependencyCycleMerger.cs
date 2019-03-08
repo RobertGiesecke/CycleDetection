@@ -12,29 +12,46 @@ namespace StronglyConnectedComponents
   {
     public delegate T MergeCycleHandler<T>(DependencyCycle<T> cycle, Func<DependencyCycle<T>, T> getMerged);
 
-#if !FEATURE_ConvertAll
-    internal static List<TResult> ConvertAll<T, TResult>(this List<T> source, Func<T, TResult> converter)
+    #if NET40
+    internal static IList<T> AsListInternal<T>(this IEnumerable<T> enumerable)
     {
-      var result = new List<TResult>(source.Count);
-      result.AddRange(source.Select(converter));
-      return result;
+      return enumerable as IList<T> ?? enumerable.ToList();
     }
+    #else
+    internal static IReadOnlyList<T> AsListInternal<T>(this IEnumerable<T> enumerable)
+    {
+      return enumerable as IReadOnlyList<T> ?? enumerable.ToList();
+    }
+    #endif
+
+    internal static List<TResult> ConvertAllInternal<T, TResult>(this IEnumerable<T> enumerable, Func<T, TResult> converter)
+    {
+#if FEATURE_ConvertAll
+      if (enumerable is List<T> l)
+      {
+        return l.ConvertAll(converter.Invoke);
+      }
 #endif
 
+      var sourceList = enumerable.AsListInternal();
+      var result = new List<TResult>(sourceList.Count);
+      result.AddRange(sourceList.Select(converter));
+      return result;
+    }
 
     /// <summary>
     /// Allows to merge cyclic dependencies into a single instance of the source element type.
     /// </summary>
-    /// <param name="components">Required. A lsequenceist of dependency components as returned by <see cref="DetectCycles{T}"/>.</param>
+    /// <param name="components">Required. A sequence of dependency components as returned by <see cref="DependencyResolver.DetectCycles{T}"/>.</param>
     /// <param name="mergeCycle" >Not required. A delegate that take the cyclic component to merge and returns the merged instance of <see cref="T"/>.
     /// Will throw a <see cref="CyclicDependenciesDetectedException"/> when a cycle is found but <see cref="mergeCycle"/> is null.</param>
     public static IEnumerable<T> MergeCyclicDependencies<T>(this IEnumerable<DependencyCycle<T>> components,
       MergeCycleHandler<T> mergeCycle = null)
     {
-      var asList = components.ToList();
+      var asList = components.AsListInternal();
 
       if (!asList.Any(t => t.IsCyclic))
-        return asList.ConvertAll(t => t.Contents.Single());
+        return asList.ConvertAllInternal(t => t.Contents.Single());
 
       if (mergeCycle == null)
         mergeCycle = delegate
@@ -48,55 +65,55 @@ namespace StronglyConnectedComponents
       asList.VisitCycles((cycle, changed, dependencies) =>
       {
         var hasCycles = false;
-        Func<bool> needsToRun = () =>
+
+        bool NeedsToRun()
         {
           cycle.Dependencies.VisitCycles((c, x, set) =>
-          {
-            if (c.IsCyclic)
             {
-              hasCycles = true;
-              return null;
-            }
+              if (c.IsCyclic)
+              {
+                hasCycles = true;
+                return null;
+              }
 
-            return c;
-          }).Count();
+              return c;
+            })
+            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
+            .Count();
 
           return hasCycles;
-        };
+        }
 
-        if (!cycle.IsCyclic && !needsToRun())
+        if (!cycle.IsCyclic && !NeedsToRun())
         {
           return cycle;
         }
 
-        T result;
-
-        if (mergedValues.TryGetValue(cycle, out result))
+        if (mergedValues.TryGetValue(cycle, out var result))
           return cycle;
 
-        Func<DependencyCycle<T>, T> getMerged = c =>
+        T GetMerged(DependencyCycle<T> c)
         {
-          T r;
-          mergedValues.TryGetValue(c, out r);
+          mergedValues.TryGetValue(c, out var r);
           return r;
-        };
+        }
 
         if (changed || hasCycles)
         {
           var newCycle = new DependencyCycle<T>(cycle.Contents, dependencies);
-          mergedValues.Add(newCycle, result = mergeCycle(newCycle, getMerged));
+          mergedValues.Add(newCycle, result = mergeCycle(newCycle, GetMerged));
           mergedValues[cycle] = result;
           return newCycle;
         }
 
-        mergedValues.Add(cycle, mergeCycle(cycle, getMerged));
+        mergedValues.Add(cycle, mergeCycle(cycle, GetMerged));
         return cycle;
+        // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
       }).Count();
 
-      return asList.ConvertAll(c =>
+      return asList.ConvertAllInternal(c =>
       {
-        T merged;
-        if (mergedValues.TryGetValue(c, out merged))
+        if (mergedValues.TryGetValue(c, out var merged))
           return merged;
 
         return c.Contents.Single();
