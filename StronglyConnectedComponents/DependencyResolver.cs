@@ -28,7 +28,36 @@ namespace StronglyConnectedComponents
     /// </summary>
     /// <param name="source">Required. The sequence of elements that need to be sorted.</param>
     /// <param name="keySelector">Required. a delegate that returns a key for each item.</param>
-    /// <param name="dependencySelector">Required. A delegate that takes an items of <see cref="source"/> and returns a sequence of dependency keys.
+    /// <param name="singleDependencySelector">Required. A delegate that takes an item of <see cref="source"/> and returns a key.
+    /// <remarks>Can return null to indicate no dependency.</remarks></param>
+    /// <param name="keyComparer">Not required. Used to compare keys.</param>
+    /// <param name="comparer">Not required. An implementation of <see cref="IEqualityComparer{T}"/>, this is used to compare the values.</param>
+    public static IList<DependencyCycle<T>> DetectCyclesUsingKey<T, TKey>(this IEnumerable<T> source,
+      Func<T, TKey> keySelector,
+      Func<T, TKey> singleDependencySelector,
+      IEqualityComparer<TKey> keyComparer = null,
+      IEqualityComparer<T> comparer = null)
+    {
+      return DetectCyclesUsingKey(
+        source,
+        keySelector,
+        dependencySelector: s =>
+        {
+          var key = singleDependencySelector(s);
+          return key == null
+            ? null
+            : new[] { key };
+        },
+        keyComparer: keyComparer,
+        comparer: comparer);
+    }
+
+    /// <summary>
+    /// Sorts all items from <see cref="source"/> so that dependencies come first. It will group cyclic dependencies into a single component.
+    /// </summary>
+    /// <param name="source">Required. The sequence of elements that need to be sorted.</param>
+    /// <param name="keySelector">Required. a delegate that returns a key for each item.</param>
+    /// <param name="dependencySelector">Required. A delegate that takes an item of <see cref="source"/> and returns a sequence of dependency keys.
     /// <remarks>Can return null to indicate no dependency.</remarks></param>
     /// <param name="keyComparer">Not required. Used to compare keys.</param>
     /// <param name="comparer">Not required. An implementation of <see cref="IEqualityComparer{T}"/>, this is used to compare the values.</param>

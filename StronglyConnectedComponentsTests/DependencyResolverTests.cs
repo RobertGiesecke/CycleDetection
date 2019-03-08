@@ -112,8 +112,7 @@ namespace StronglyConnectedComponents.Tests
                     },
                   };
 
-      var byValue = graph.ToLookup(k => k.Value);
-      var components = graph.DetectCycles(s => byValue[s.DependsOn]);
+      var components = graph.DetectCyclesUsingKey(s => s.Value, s => s.DependsOn);
 
       Assert.AreEqual(1, components.Count);
       Assert.AreEqual(0, components.IndependentComponents().Count());
