@@ -22,7 +22,7 @@ namespace StronglyConnectedComponents.Tests
                     vD = TestValue.Create("D"),
                   };
       var byValue = graph.ToLookup(t => t.Value);
-      var components = graph.DetectCycles(s => s.DependsOn.SelectMany(d => byValue[d]));
+      var components = graph.DetectCyclesUsingKey(t => t.Value, s => s.DependsOn);
       Assert.AreNotEqual(components.Cycles().Count(), 0);
       var flattened = components.MergeCyclicDependencies().ToList();
     }
@@ -47,7 +47,7 @@ namespace StronglyConnectedComponents.Tests
                   };
 
       var byValue = graph.ToLookup(t => t.Value);
-      var components = graph.DetectCycles(s => s.DependsOn.SelectMany(d => byValue[d]));
+      var components = graph.DetectCyclesUsingKey(t => t.Value, s => s.DependsOn);
 
       Assert.AreNotEqual(components.Cycles().Count(), 0);
 

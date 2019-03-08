@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace StronglyConnectedComponents.Tests.Utils
 {
   public class TestValue<T>
   {
-    public T Value { get; private set; }
-    public IList<T> DependsOn { get; private set; }
+    public T Value { get; }
+    public IList<T> DependsOn { get; }
 
     public TestValue(T value, params T[] dependsOn)
     {
