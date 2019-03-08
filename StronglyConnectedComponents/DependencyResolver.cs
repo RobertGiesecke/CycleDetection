@@ -43,23 +43,19 @@ namespace StronglyConnectedComponents
 
       var cycleByComponent = new Dictionary<StronglyConnectedComponent<T>, DependencyCycle<T>>();
 
-      Func<StronglyConnectedComponent<T>, DependencyCycle<T>> getCycle = null;
-
-      getCycle = sc =>
+      DependencyCycle<T> GetCycle(StronglyConnectedComponent<T> sc)
       {
-        DependencyCycle<T> result;
-        if (cycleByComponent.TryGetValue(sc, out result))
-          return result;
+        if (cycleByComponent.TryGetValue(sc, out var result)) return result;
 
         var dependencies = sc.SelectMany(t => t.Dependencies).SelectMany(d => byVertex[d]);
         var sets = new HashSet<DependencyCycle<T>>();
         DependencyCycle<T> cycle;
         cycleByComponent.Add(sc, cycle = new DependencyCycle<T>(sc.Select(t => t.Value).ToHashSet(valueComparer), sets));
-        sets.UnionWith(dependencies.Select(getCycle).Where(t => t != cycle));
+        sets.UnionWith(dependencies.Select(GetCycle).Where(t => t != cycle));
         return cycle;
-      };
+      }
 
-      return getCycle;
+      return GetCycle;
     }
 
     /// <summary>
@@ -91,12 +87,12 @@ namespace StronglyConnectedComponents
     public static IEnumerable<DependencyCycle<T>> IndependentComponents<T>(this IEnumerable<DependencyCycle<T>> components)
     {
       if (components == null)
-        throw new ArgumentNullException("components");
+        throw new ArgumentNullException(nameof(components));
       return components.Where(c => !c.IsCyclic);
     }
 
     /// <summary>
-    /// Returns only components that represent a cyclic dependancy.
+    /// Returns only components that represent a cyclic dependency.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="components">Required. A sequence of dependency components as returned by <see cref="DetectCycles{T}"/>.</param>
@@ -104,7 +100,7 @@ namespace StronglyConnectedComponents
     public static IEnumerable<DependencyCycle<T>> Cycles<T>(this IEnumerable<DependencyCycle<T>> components)
     {
       if (components == null)
-        throw new ArgumentNullException("components");
+        throw new ArgumentNullException(nameof(components));
       return components.Where(c => c.IsCyclic);
     }
   }

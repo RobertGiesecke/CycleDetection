@@ -15,7 +15,7 @@ namespace StronglyConnectedComponents.Tests.Utils
   public class DerivedComparer<TInput, TCompared> : IEqualityComparer<TInput>
   {
     private readonly Func<TInput, TCompared> _PrepareValue;
-    public IEqualityComparer<TCompared> ActualComparer { get; private set; }
+    public IEqualityComparer<TCompared> ActualComparer { get; }
 
     TCompared PrepareValue(TInput value)
     {
@@ -27,8 +27,7 @@ namespace StronglyConnectedComponents.Tests.Utils
 
     public DerivedComparer(IEqualityComparer<TCompared> actualComparer, Func<TInput, TCompared> prepareValue)
     {
-      if (prepareValue == null) throw new ArgumentNullException("prepareValue");
-      _PrepareValue = prepareValue;
+      _PrepareValue = prepareValue ?? throw new ArgumentNullException(nameof(prepareValue));
       ActualComparer = actualComparer ?? EqualityComparer<TCompared>.Default;
     }
 
