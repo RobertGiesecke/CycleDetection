@@ -11,7 +11,7 @@
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <UpgradeBackupLocation>
@@ -19,13 +19,25 @@
     <OldToolsVersion>2.0</OldToolsVersion>
   </PropertyGroup>
   <PropertyGroup>
+    <PackageId>CycleDetection</PackageId>
+    <Authors>DanielBradley,RobertGiesecke</Authors>
+    <PackageProjectUrl>https://github.com/RobertGiesecke/CycleDetection</PackageProjectUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Title>Library to resolve cyclic or acyclic dependencies</Title>
+    <Description>This is a fork of Daniel Bradley's C# implementation of the Tarjan cycle detection algorithm. (https://github.com/danielrbradley/CycleDetection)
+      You can use this library to sort dependencies and even handle cyclic references. e.g. to compile stuff in the right order.
+
+      I found it to be quite useful but I didn't like how one had to manually setup the dependency vertices. (It also supports custom comparers now.)
+
+      So I moved the original code into the Core sub namespace and wrote a class that allows to setup dependencies using a simple lambda expression.</Description>
+    <PackageTags>dependencies cyclic acyclic tarjan cycledetection dependency resolution</PackageTags>
+  </PropertyGroup>
+  <PropertyGroup>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="StronglyConnectedComponents.nuspec" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="CycleDetection.snk" />
+    <None Condition="exists('CycleDetection.snk')" Include="CycleDetection.snk" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' or '$(TargetFramework)' == 'netstandard1.1'">
     <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
