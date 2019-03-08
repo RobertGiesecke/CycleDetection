@@ -25,11 +25,11 @@ namespace StronglyConnectedComponents
 
     public static IList<DependencyCycle<T>> ExtractCycles<T>(this IEnumerable<StronglyConnectedComponent<T>> components, IEqualityComparer<T> valueComparer)
     {
-      var asList = components.ToList();
+      var asList = components.AsListInternal();
 
       var getDependencyCycleFromSc = BuildGetDependencyCycleFromStronglyConnectedComponent(valueComparer, asList);
 
-      return asList.ConvertAll(t => getDependencyCycleFromSc(t));
+      return asList.ConvertAllInternal(t => getDependencyCycleFromSc(t));
     }
 
     private static Func<StronglyConnectedComponent<T>, DependencyCycle<T>> BuildGetDependencyCycleFromStronglyConnectedComponent<T>(IEqualityComparer<T> valueComparer, IEnumerable<StronglyConnectedComponent<T>> asList)

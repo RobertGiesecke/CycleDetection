@@ -12,15 +12,32 @@ namespace StronglyConnectedComponents
   {
     public delegate T MergeCycleHandler<T>(DependencyCycle<T> cycle, Func<DependencyCycle<T>, T> getMerged);
 
-#if !FEATURE_ConvertAll
-    internal static List<TResult> ConvertAll<T, TResult>(this List<T> source, Func<T, TResult> converter)
+    #if NET40
+    internal static IList<T> AsListInternal<T>(this IEnumerable<T> enumerable)
     {
-      var result = new List<TResult>(source.Count);
-      result.AddRange(source.Select(converter));
-      return result;
+      return enumerable as IList<T> ?? enumerable.ToList();
     }
+    #else
+    internal static IReadOnlyList<T> AsListInternal<T>(this IEnumerable<T> enumerable)
+    {
+      return enumerable as IReadOnlyList<T> ?? enumerable.ToList();
+    }
+    #endif
+
+    internal static List<TResult> ConvertAllInternal<T, TResult>(this IEnumerable<T> enumerable, Func<T, TResult> converter)
+    {
+#if FEATURE_ConvertAll
+      if (enumerable is List<T> l)
+      {
+        return l.ConvertAll(converter.Invoke);
+      }
 #endif
 
+      var sourceList = enumerable.AsListInternal();
+      var result = new List<TResult>(sourceList.Count);
+      result.AddRange(sourceList.Select(converter));
+      return result;
+    }
 
     /// <summary>
     /// Allows to merge cyclic dependencies into a single instance of the source element type.
@@ -31,10 +48,10 @@ namespace StronglyConnectedComponents
     public static IEnumerable<T> MergeCyclicDependencies<T>(this IEnumerable<DependencyCycle<T>> components,
       MergeCycleHandler<T> mergeCycle = null)
     {
-      var asList = components.ToList();
+      var asList = components.AsListInternal();
 
       if (!asList.Any(t => t.IsCyclic))
-        return asList.ConvertAll(t => t.Contents.Single());
+        return asList.ConvertAllInternal(t => t.Contents.Single());
 
       if (mergeCycle == null)
         mergeCycle = delegate
@@ -93,7 +110,7 @@ namespace StronglyConnectedComponents
         return cycle;
       }).Count();
 
-      return asList.ConvertAll(c =>
+      return asList.ConvertAllInternal(c =>
       {
         T merged;
         if (mergedValues.TryGetValue(c, out merged))
