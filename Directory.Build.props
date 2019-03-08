@@ -1,0 +1,11 @@
+<Project>
+    <PropertyGroup>
+        <AssemblyOriginatorKeyFileValue>$([MSBuild]::GetPathOfFileAbove('CycleDetection.snk', '$(MSBuildThisFileDirectory)StronglyConnectedComponents'))</AssemblyOriginatorKeyFileValue>
+    </PropertyGroup>
+    <PropertyGroup>
+        <TargetFrameworks>netstandard1.0;netstandard1.1;netcoreapp2.0;net40;net45</TargetFrameworks>
+        <ProjAssemblyName>StronglyConnectedComponents</ProjAssemblyName>
+        <ProjRootNamespace>StronglyConnectedComponents</ProjRootNamespace>
+        <AssemblyOriginatorKeyFile Condition="exists('$(AssemblyOriginatorKeyFileValue)')">$(AssemblyOriginatorKeyFileValue)</AssemblyOriginatorKeyFile>
+    </PropertyGroup>
+</Project>

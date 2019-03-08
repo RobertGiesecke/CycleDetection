@@ -5,17 +5,53 @@ namespace StronglyConnectedComponents
 {
   static internal class DependencyVisitor
   {
-    public delegate DependencyCycle<T> VisitCycleHandler<T>(DependencyCycle<T> cycle, bool dependenciesChanged, ISet<DependencyCycle<T>> dependencies);
+    public delegate DependencyCycle<T> VisitCycleHandler<T>(DependencyCycle<T> cycle,
+      bool dependenciesChanged,
+      ISet<DependencyCycle<T>> dependencies);
 
-    public static IEnumerable<DependencyCycle<T>> VisitCycles<T>(this IEnumerable<DependencyCycle<T>> cycles, VisitCycleHandler<T> visit)
+    internal sealed class HashSetEqualityComparer<T> : IEqualityComparer<HashSet<T>>
+    {
+      public static readonly HashSetEqualityComparer<T> Default = new HashSetEqualityComparer<T>();
+      public bool Equals(HashSet<T> x, HashSet<T> y)
+      {
+        if (x.Comparer != y.Comparer)
+        {
+          throw new ArgumentOutOfRangeException(nameof(y),
+            $"{nameof(Equals)} requires both hashsets to have the same comparer.");
+        }
+
+        return x.SetEquals(y);
+      }
+
+      public int GetHashCode(HashSet<T> obj)
+      {
+        int num = 0;
+        if (obj != null)
+        {
+          foreach (T obj1 in obj)
+            num ^= obj.Comparer.GetHashCode(obj1) & int.MaxValue;
+        }
+
+        return num;
+      }
+    }
+
+
+    public static IEnumerable<DependencyCycle<T>> VisitCycles<T>(this IEnumerable<DependencyCycle<T>> cycles,
+      VisitCycleHandler<T> visit)
     {
       var mc = new Dictionary<DependencyCycle<T>, DependencyCycle<T>>();
 
-      var setComparer = HashSet<DependencyCycle<T>>.CreateSetComparer();
+
+      var setComparer = HashSetEqualityComparer<DependencyCycle<T>>.Default;
       return VisitCyclesCore(cycles, () => { }, mc, visit, setComparer);
     }
 
-    private static IEnumerable<DependencyCycle<T>> VisitCyclesCore<T>(IEnumerable<DependencyCycle<T>> cycles, Action cancelled, IDictionary<DependencyCycle<T>, DependencyCycle<T>> cache, DependencyVisitor.VisitCycleHandler<T> visit, IEqualityComparer<HashSet<DependencyCycle<T>>> setComparer)
+    private static IEnumerable<DependencyCycle<T>> VisitCyclesCore<T>(IEnumerable<DependencyCycle<T>> cycles,
+      Action cancelled,
+      IDictionary<DependencyCycle<T>, DependencyCycle<T>> cache,
+      DependencyVisitor.VisitCycleHandler<T> visit,
+      IEqualityComparer<HashSet<DependencyCycle<T>>> setComparer)
     {
       foreach (var cycle in cycles)
       {
@@ -33,7 +69,8 @@ namespace StronglyConnectedComponents
         if (dependencies.Count > 0)
         {
           var wasCancelled = false;
-          var dependenciesSet = VisitCyclesCore(dependencies, () => wasCancelled = true, cache, visit, setComparer).ToHashSet();
+          var dependenciesSet = VisitCyclesCore(dependencies, () => wasCancelled = true, cache, visit, setComparer)
+            .ToHashSet();
 
           if (wasCancelled)
           {

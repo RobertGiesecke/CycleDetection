@@ -1,3 +1,7 @@
+#if NETFRAMEWORK || (!NETSTANDARD1_0 && !NETSTANDARD1_1)
+#define FEATURE_ConvertAll
+#endif
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,13 +12,24 @@ namespace StronglyConnectedComponents
   {
     public delegate T MergeCycleHandler<T>(DependencyCycle<T> cycle, Func<DependencyCycle<T>, T> getMerged);
 
+#if !FEATURE_ConvertAll
+    internal static List<TResult> ConvertAll<T, TResult>(this List<T> source, Func<T, TResult> converter)
+    {
+      var result = new List<TResult>(source.Count);
+      result.AddRange(source.Select(converter));
+      return result;
+    }
+#endif
+
+
     /// <summary>
     /// Allows to merge cyclic dependencies into a single instance of the source element type.
     /// </summary>
     /// <param name="components">Required. A lsequenceist of dependency components as returned by <see cref="DetectCycles{T}"/>.</param>
     /// <param name="mergeCycle" >Not required. A delegate that take the cyclic component to merge and returns the merged instance of <see cref="T"/>.
     /// Will throw a <see cref="CyclicDependenciesDetectedException"/> when a cycle is found but <see cref="mergeCycle"/> is null.</param>
-    public static IEnumerable<T> MergeCyclicDependencies<T>(this IEnumerable<DependencyCycle<T>> components, MergeCycleHandler<T> mergeCycle = null)
+    public static IEnumerable<T> MergeCyclicDependencies<T>(this IEnumerable<DependencyCycle<T>> components,
+      MergeCycleHandler<T> mergeCycle = null)
     {
       var asList = components.ToList();
 
@@ -22,13 +37,16 @@ namespace StronglyConnectedComponents
         return asList.ConvertAll(t => t.Contents.Single());
 
       if (mergeCycle == null)
-        mergeCycle = delegate { throw new CyclicDependenciesDetectedException("A cyclic dependency has been detected. This method cannot continue without a value for mergeCycle."); };
+        mergeCycle = delegate
+        {
+          throw new CyclicDependenciesDetectedException(
+            "A cyclic dependency has been detected. This method cannot continue without a value for mergeCycle.");
+        };
 
       var mergedValues = new Dictionary<DependencyCycle<T>, T>();
 
       asList.VisitCycles((cycle, changed, dependencies) =>
       {
-
         var hasCycles = false;
         Func<bool> needsToRun = () =>
         {
@@ -39,6 +57,7 @@ namespace StronglyConnectedComponents
               hasCycles = true;
               return null;
             }
+
             return c;
           }).Count();
 
@@ -47,7 +66,6 @@ namespace StronglyConnectedComponents
 
         if (!cycle.IsCyclic && !needsToRun())
         {
-
           return cycle;
         }
 
@@ -88,8 +106,8 @@ namespace StronglyConnectedComponents
     internal static HashSet<T> ToHashSet<T>(this IEnumerable<T> list, IEqualityComparer<T> comparer = null)
     {
       return comparer != null
-               ? new HashSet<T>(list, comparer)
-               : new HashSet<T>(list);
+        ? new HashSet<T>(list, comparer)
+        : new HashSet<T>(list);
     }
   }
 }
